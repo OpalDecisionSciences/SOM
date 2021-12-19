@@ -93,3 +93,8 @@ mappings = som.win_map(X)
 frauds = np.concatenate((mappings[(1, 4)], mappings[(5, 4)]), axis = 0)
 # Inverse scaling
 frauds = sc.inverse_transform(frauds)
+
+# Printing the Fraud Clients
+print('Fraud Customer IDs')
+for i in frauds[:, 0]:
+    print(int(i))
