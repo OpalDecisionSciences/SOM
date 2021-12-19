@@ -1,0 +1,95 @@
+
+# Self Organizing Map - Unsupervised Deep Learning - Fraud Detection
+# Customer applying for Credit Card - Predicting Potential Fraud on Application
+# Identify Patterns in a High-Dimensional Data Set that's full of Non-Linear Relationships
+# One of these patterns will be these potential frauds
+
+# Dataset found at Center for Machine Learning and Intelligent Systems, UCI: 
+# archive.ics.uci.edu/ml/datasets/Statlog+%28Australian+Credit+Approval%29
+
+# Import Packages
+import os
+import numpy as np
+import pandas as pd
+
+import matplotlib.pyplot as plt
+
+from sklearn.preprocessing import MinMaxScaler
+
+from minisom import MiniSom
+from pylab import bone, pcolor, colorbar, plot, show
+
+# Specify Directory
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+IMAGES_PATH = CURRENT_DIR + '\\'
+
+# Import Dataset
+dataset = pd.read_csv('Credit_Card_Applications.csv')
+
+#################### Save Figures ###################
+
+def save_fig(fig_id, tight_layout=True, fig_extension="png", resolution=300):
+    path = os.path.join(IMAGES_PATH, fig_id + "." + fig_extension)
+    print("Saving figure", fig_id)
+    if tight_layout:
+        plt.tight_layout()
+    plt.savefig(path, format=fig_extension, dpi=resolution)
+
+
+# Frauds are outlier neurons that are far from the majority of neurons following the rules
+# Find outlier neurons with MID: Mean Interneuron Distance (mean of eucledian distance) and Guassian Neighborhood Function for neighboring nodes
+# Inverse Mapping function to identify customer ID associated to wining neuron that is an outlier
+
+# Create two subsets: approved/not approved, to prioritize predicted fraudulent applications that were approved
+# Just to make approval distinction on the map 
+# This is Unsupervised Learning - not doing this for Supervised Learning purposes
+X = dataset.iloc[:, :-1]
+y = dataset.iloc[:, -1]
+
+# Feature Scaling
+sc = MinMaxScaler(feature_range=(0, 1))
+X = sc.fit_transform(X)
+
+# Train SOM using numpy based MiniSom: 10 X 10 grid, 15 features in X, sigma = radius
+som = MiniSom(x = 10, y = 10, input_len = 15, sigma = 1.0, learning_rate = 0.5)
+
+# Initialize weights
+som.random_weights_init(X)
+som.train_random(data = X, num_iteration = 100)
+
+# Identify Outlier Neurons: Visualizing the Results
+# Initialize the wondow that will contain the map
+bone()
+
+# Different colors representing different MID
+pcolor(som.distance_map().T)
+colorbar()
+
+# Red circles did not get approval, green circles received approval
+markers = ['o', 's']
+colors = ['r', 'g']
+# associate markers and colors: loop over all vector of customers, x, at index, i
+# color winning node according to whether they received approval
+for i, x in enumerate(X):
+    # Get winning node for first customer
+    w = som.winner(x)
+    # Place colored marker on center of winning node of map square (+ 0.5) according to (x, y) coordinates
+    # get whether customer was approved or not using y vector from above (approvals)
+    plot(w[0] + 0.5,
+         w[1] + 0.5,
+         markers[y[i]],
+         markeredgecolor = colors[y[i]],
+         markerfacecolor = 'None',
+         markersize = 10,
+         markeredgewidth = 2)
+show()
+
+# Finding the Frauds
+# Use a dictionary to obtain different mappings of winning nodes to list of customers
+mappings = som.win_map(X)
+
+# Get list of potential frauds
+# Concatenate two lists of fraudulent customers (there are two white squares)
+frauds = np.concatenate((mappings[(1, 4)], mappings[(5, 4)]), axis = 0)
+# Inverse scaling
+frauds = sc.inverse_transform(frauds)
