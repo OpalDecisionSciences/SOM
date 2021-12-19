@@ -26,15 +26,6 @@ IMAGES_PATH = CURRENT_DIR + '\\'
 # Import Dataset
 dataset = pd.read_csv('Credit_Card_Applications.csv')
 
-#################### Save Figures ###################
-
-def save_fig(fig_id, tight_layout=True, fig_extension="png", resolution=300):
-    path = os.path.join(IMAGES_PATH, fig_id + "." + fig_extension)
-    print("Saving figure", fig_id)
-    if tight_layout:
-        plt.tight_layout()
-    plt.savefig(path, format=fig_extension, dpi=resolution)
-
 
 # Frauds are outlier neurons that are far from the majority of neurons following the rules
 # Find outlier neurons with MID: Mean Interneuron Distance (mean of eucledian distance) and Guassian Neighborhood Function for neighboring nodes
@@ -43,8 +34,8 @@ def save_fig(fig_id, tight_layout=True, fig_extension="png", resolution=300):
 # Create two subsets: approved/not approved, to prioritize predicted fraudulent applications that were approved
 # Just to make approval distinction on the map 
 # This is Unsupervised Learning - not doing this for Supervised Learning purposes
-X = dataset.iloc[:, :-1]
-y = dataset.iloc[:, -1]
+X = dataset.iloc[:, :-1].values
+y = dataset.iloc[:, -1].values
 
 # Feature Scaling
 sc = MinMaxScaler(feature_range=(0, 1))
